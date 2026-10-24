@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Interactive sample prototype of a campaign reporting and planning workspace. All data is invented.">
+<style>html{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Campaign Suite Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: a calm analyst workspace. Sticky tab bar, one working surface, evidence-first cards. */
+:root{
+  --bg:#F5F6F4; --surface:#FFFFFF; --ink:#1B2230; --muted:#5B6575; --line:#DDE1E0;
+  --accent:#0F6E66; --accent-ink:#FFFFFF; --accent-soft:#DCEFEC;
+  --warn:#8A5A00; --warn-soft:#FFF1D6; --bad:#A3262A; --bad-soft:#FBE3E3; --good:#1E6B3A; --good-soft:#E0F2E6;
+  --banner:#1B2230; --banner-ink:#F5F6F4;
+  --f-display:'Sora',system-ui,sans-serif; --f-body:'IBM Plex Sans',system-ui,sans-serif; --f-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12171F; --surface:#1A212C; --ink:#E9EDF2; --muted:#9AA6B6; --line:#2B3442;
+  --accent:#4FC3B7; --accent-ink:#0B1412; --accent-soft:#16332F;
+  --warn:#F0C26B; --warn-soft:#3A2D10; --bad:#F29A9C; --bad-soft:#3D1A1C; --good:#7CD39B; --good-soft:#12301D;
+  --banner:#E9EDF2; --banner-ink:#12171F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171F; --surface:#1A212C; --ink:#E9EDF2; --muted:#9AA6B6; --line:#2B3442;
+  --accent:#4FC3B7; --accent-ink:#0B1412; --accent-soft:#16332F;
+  --warn:#F0C26B; --warn-soft:#3A2D10; --bad:#F29A9C; --bad-soft:#3D1A1C; --good:#7CD39B; --good-soft:#12301D;
+  --banner:#E9EDF2; --banner-ink:#12171F; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+h2{font-size:20px} h3{font-size:16px}
+p{margin:0}
+.muted{color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.num{font-variant-numeric:tabular-nums}
+/* banner */
+.banner{background:var(--banner);color:var(--banner-ink);margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+.banner .wrap{display:flex;gap:6px 14px;flex-wrap:wrap;align-items:baseline}
+.banner strong{font-family:var(--f-display);font-size:14px;letter-spacing:.01em}
+.banner span{font-size:13px;opacity:.85}
+/* header */
+header.top{padding:22px 0 14px;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between}
+header.top h1{font-size:26px;font-weight:800}
+header.top .sub{color:var(--muted);max-width:60ch;margin-top:4px}
+.brandtag{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);padding:4px 8px;border-radius:6px;color:var(--muted);background:var(--surface)}
+nav.tabs{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:6px;overflow-x:auto;padding:8px 0;margin-bottom:22px}
+nav.tabs button{font:600 14px var(--f-display);color:var(--muted);background:transparent;border:0;padding:9px 14px;border-radius:8px;cursor:pointer;white-space:nowrap}
+nav.tabs button:hover{background:var(--surface);color:var(--ink)}
+nav.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+/* cards */
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.card.pad0{padding:0;overflow:hidden}
+.kpi .label{font-size:13px;color:var(--muted)}
+.kpi .value{font:800 28px var(--f-display);margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi .hint{font-size:13px;color:var(--muted);margin-top:2px}
+section{margin-bottom:30px}
+section>header{margin-bottom:12px}
+section>header p{color:var(--muted);max-width:70ch;margin-top:2px}
+.pill{display:inline-block;font:600 12px var(--f-body);padding:3px 9px;border-radius:99px;border:1px solid transparent}
+.pill.good{background:var(--good-soft);color:var(--good)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.neutral{background:var(--accent-soft);color:var(--accent)}
+.row{display:flex;gap:10px 16px;flex-wrap:wrap;align-items:center}
+.btn{font:600 14px var(--f-display);background:var(--accent);color:var(--accent-ink);border:0;border-radius:9px;padding:10px 16px;cursor:pointer}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.btn.small{padding:6px 10px;font-size:13px}
+label.f{display:block;font-weight:600;font-size:14px}
+label.f small{display:block;font-weight:400;color:var(--muted)}
+input[type=text],input[type=number],input[type=date],select{width:100%;margin-top:4px;font:15px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.opts{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.opt{text-align:left;font:inherit;color:inherit;background:var(--surface);border:2px solid var(--line);border-radius:10px;padding:11px 12px;cursor:pointer;min-width:0}
+.opt:hover{border-color:var(--muted)}
+.opt[aria-checked="true"],.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.opt b{display:block;font-size:14px} .opt span{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{display:inline-flex;gap:8px;align-items:center;background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:4px 10px;font-weight:600;font-size:13px}
+.chip button{background:none;border:0;color:inherit;font-weight:700;cursor:pointer;padding:0}
+/* campaign cards */
+.camp{display:grid;gap:12px}
+.camp h3{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.kv dt{font-size:12px;color:var(--muted)} .kv dd{margin:0;font:700 18px var(--f-display);font-variant-numeric:tabular-nums}
+.verdict{border-left:4px solid var(--accent);background:var(--bg);padding:10px 12px;border-radius:0 8px 8px 0;font-size:14px}
+.verdict.good{border-color:var(--good)} .verdict.warn{border-color:var(--warn)} .verdict.bad{border-color:var(--bad)}
+/* table */
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th.r,td.r{text-align:right}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--bg)}
+tr.grp td{background:var(--bg);font:700 13px var(--f-display);color:var(--accent)}
+/* funnel */
+.fun{display:grid;gap:8px}
+.fun .step{display:grid;grid-template-columns:150px 1fr 120px;gap:10px;align-items:center;font-size:14px}
+.fun .bar{height:22px;border-radius:5px;background:var(--accent-soft);position:relative;overflow:hidden}
+.fun .bar i{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:5px}
+@media(max-width:560px){.fun .step{grid-template-columns:1fr;gap:3px}}
+/* checks */
+ul.checks{list-style:none;padding:0;margin:0;display:grid;gap:7px}
+ul.checks li{display:flex;gap:10px;align-items:flex-start;font-size:14px}
+ul.checks .dot{flex:none;width:20px;height:20px;border-radius:99px;display:grid;place-items:center;font:700 12px var(--f-body)}
+.dot.ok{background:var(--good-soft);color:var(--good)} .dot.err{background:var(--bad-soft);color:var(--bad)} .dot.wn{background:var(--warn-soft);color:var(--warn)}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}
+.flow .s{padding:4px 10px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.flow .s.on{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:600}
+.flow .s.done{background:var(--good-soft);color:var(--good);border-color:transparent}
+.auto{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.auto div{background:var(--bg);border-radius:8px;padding:9px 11px;font-size:14px;min-width:0}
+.auto b{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.auto code{font-family:var(--f-mono);font-size:12.5px;word-break:break-all}
+.bars{display:grid;gap:8px}
+.bars .b{display:grid;grid-template-columns:130px 1fr 80px;gap:10px;align-items:center;font-size:14px}
+.bars .t{height:20px;background:var(--accent-soft);border-radius:5px;overflow:hidden}
+.bars .t i{display:block;height:100%;background:var(--accent);transition:width .35s}
+.bars .t i.bad{background:var(--bad)}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.toggle button{font:600 13px var(--f-body);background:var(--surface);color:var(--ink);border:0;padding:7px 12px;cursor:pointer}
+.toggle button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+footer{border-top:1px solid var(--line);padding:18px 0 28px;color:var(--muted);font-size:13px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="banner" role="note"><div class="wrap">
+  <strong>Sample prototype made for a CV.</strong>
+  <span>Every number, name and campaign here is invented. Nothing connects to a real account and nothing spends money. Concept and product rules by Débora Malqui.</span>
+</div></div>
+
+<div class="wrap">
+<header class="top">
+  <div>
+    <h1>Campaign Suite</h1>
+    <p class="sub">A reporting and campaign-planning workspace that answers one question for the people paying for ads: <em>did it work, and what did it cost?</em></p>
+  </div>
+  <span class="brandtag">Brightline Accessories · fictional store · last 28 days</span>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" id="t-today" aria-selected="true" data-tab="today">1 · Today</button>
+  <button role="tab" id="t-campaigns" aria-selected="false" data-tab="campaigns">2 · Campaigns</button>
+  <button role="tab" id="t-new" aria-selected="false" data-tab="new">3 · New campaign</button>
+  <button role="tab" id="t-checks" aria-selected="false" data-tab="checks">4 · Data checks</button>
+</nav>
+
+<main id="view"></main>
+
+<footer>
+  Prototype for demonstration only. Stack of the real tool this is modelled on: React, TypeScript and Node, reading GA4, Search Console, Google Ads and the Meta Graph API (read-only, keys kept on the server). This page is a single self-contained file with simulated data. Built with AI-assisted development.
+</footer>
+</div>
+
+<script>
+/* ============ invented data ============ */
+const CAMPAIGNS = [
+  {id:'c1',name:'Spring drop · Reels',platform:'Meta',status:'active',goal:'Awareness',unit:'people reached',paid:1200,result:84300,visits:610,purchases:2,revenue:260,started:'Oct 2'},
+  {id:'c2',name:'Gift guide · Traffic',platform:'Meta',status:'active',goal:'Traffic',unit:'link clicks',paid:1800,result:4400,visits:3780,purchases:11,revenue:1540,started:'Oct 6'},
+  {id:'c3',name:'WhatsApp concierge',platform:'Meta',status:'active',goal:'Messages',unit:'conversations',paid:600,result:142,visits:120,purchases:0,revenue:0,started:'Oct 9'},
+  {id:'c4',name:'Hiring · Store lead (form)',platform:'Meta',status:'active',goal:'Leads',unit:'applications',paid:900,result:85,visits:210,purchases:0,revenue:0,started:'Oct 12'},
+  {id:'c5',name:'Cart reminder · Display',platform:'Google',status:'active',goal:'Sales',unit:'purchases',paid:700,result:9,visits:340,purchases:9,revenue:1820,started:'Oct 3'},
+  {id:'c6',name:'Winter lookbook',platform:'Meta',status:'ended',goal:'Awareness',unit:'people reached',paid:900,result:52000,visits:300,purchases:1,revenue:90,started:'Aug 4'},
+  {id:'c7',name:'Black week teaser',platform:'Meta',status:'ended',goal:'Traffic',unit:'link clicks',paid:1500,result:2600,visits:2200,purchases:6,revenue:760,started:'Aug 18'},
+  {id:'c8',name:'Holiday help desk',platform:'Meta',status:'ended',goal:'Messages',unit:'conversations',paid:500,result:90,visits:80,purchases:0,revenue:0,started:'Sep 1'},
+  {id:'c9',name:'Hiring · v1 form',platform:'Meta',status:'ended',goal:'Leads',unit:'applications',paid:1000,result:58,visits:150,purchases:0,revenue:0,started:'Sep 8'},
+  {id:'c10',name:'Back-in-stock search',platform:'Google',status:'ended',goal:'Sales',unit:'purchases',paid:800,result:6,visits:260,purchases:6,revenue:960,started:'Sep 12'}
+];
+const FUNNEL = [['Viewed a product',1820],['Added to cart',262],['Started checkout',141],['Entered payment info',53],['Purchased',20]];
+const POSTS = [
+  {id:'p1',date:'Oct 21',text:'Gift guide: five picks under $25',type:'Carousel'},
+  {id:'p2',date:'Oct 18',text:'Behind the counter: how we pack an order',type:'Reel'},
+  {id:'p3',date:'Oct 15',text:'New arrivals — the autumn colour story',type:'Photo'}
+];
+const OBJECTIVES = [
+  {id:'awareness',label:'More people know the brand',help:'Shows the ad to as many people as possible.',meta:'Awareness (OUTCOME_AWARENESS)',goal:'Reach (REACH)',dest:'The chosen post'},
+  {id:'traffic',label:'Visit the website',help:'Sends people to the store site.',meta:'Traffic (OUTCOME_TRAFFIC)',goal:'Landing page views',dest:'https://brightline.example/'},
+  {id:'messages',label:'Message us on WhatsApp',help:'Opens a chat with the store.',meta:'Engagement (OUTCOME_ENGAGEMENT)',goal:'Conversations',dest:'WhatsApp chat of the store'},
+  {id:'leads',label:'Fill in a form (job applications)',help:'Collects applications with an instant form.',meta:'Leads (OUTCOME_LEADS)',goal:'Leads (LEAD_GENERATION)',dest:'Instant form → thank-you screen'},
+  {id:'sales',label:'Buy online',help:'Optimises for purchases in the store.',meta:'Sales (OUTCOME_SALES)',goal:'Purchases on website',dest:'https://brightline.example/'}
+];
+const SEGMENTS = [
+  ['viewed','Viewed a product and did not add to cart (30 days)'],
+  ['cart','Added to cart and did not buy'],
+  ['checkout','Started checkout and did not buy'],
+  ['bought','Already bought (to offer again)'],
+  ['job','Visited the job page and did not apply']
+];
+const RADII=[5,10,17,25,40,80];
+
+/* ============ helpers ============ */
+const $=s=>document.querySelector(s);
+const money=(n,d)=>'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:d??(Math.abs(n)<100&&n%1?2:0),maximumFractionDigits:d??(Math.abs(n)<100?2:0)});
+const int=n=>Number(n).toLocaleString('en-US');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const median=a=>{const s=[...a].sort((x,y)=>x-y);const m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2};
+const state={tab:'today',margin:50,group:'unit',open:null,pixel:false,
+  draft:null, flowStep:0, created:null, forms:{}};
+const costEach=c=>c.paid/c.result;
+function benchmark(c){
+  const peers=CAMPAIGNS.filter(x=>x.unit===c.unit&&x.paid>0);
+  if(peers.length<2)return null;
+  return median(peers.map(costEach));
+}
+function verdict(c){
+  const med=benchmark(c); const ratio=med?costEach(c)/med:null;
+  let kind='neutral',text='';
+  const be=1/(state.margin/100);
+  const roas=c.revenue&&c.paid?c.revenue/c.paid:null;
+  if(c.unit==='people reached'||c.unit==='link clicks'||c.unit==='conversations'||c.unit==='applications'||c.unit==='purchases'){
+    if(ratio===null)text='Not enough similar campaigns to compare yet.';
+    else if(ratio<0.8){kind='good';text=`Cheaper than usual: each ${c.unit.replace(/s$/,'')} cost ${money(costEach(c))} against a typical ${money(med)} for campaigns of this type.`}
+    else if(ratio>1.2){kind='bad';text=`More expensive than usual: ${money(costEach(c))} each against a typical ${money(med)}.`}
+    else{kind='neutral';text=`About the usual price: ${money(costEach(c))} each against a typical ${money(med)}.`}
+  }
+  let extra='';
+  if(roas!==null&&(c.goal==='Sales'||c.goal==='Traffic')){
+    const ok=roas>=be;
+    extra=` Measured sales: ${money(c.revenue)} for ${money(c.paid)} spent (${roas.toFixed(2)} per $1). With an assumed gross margin of ${state.margin}% it needs ${be.toFixed(2)} per $1 to break even: ${ok?'it is paying back.':'it is not paying back yet.'}`;
+    if(c.unit==='purchases'){kind=ok?'good':'warn'}
+  } else if(c.goal==='Awareness'){
+    extra=' No sales are measured for this goal, so this view does not call it a failure; judge it by what it was meant to do.';
+  }
+  return {kind,text:text+extra,ratio,med};
+}
+function pill(kind,t){return `<span class="pill ${kind}">${esc(t)}</span>`}
+function statusPill(c){return c.status==='active'?pill('good','Running'):pill('neutral','Ended')}
+
+/* ============ TODAY ============ */
+function cardsHtml(){
+  return CAMPAIGNS.filter(c=>c.status==='active').map(c=>{
+    const v=verdict(c);
+    return `<article class="card camp">
+      <h3>${esc(c.name)} ${statusPill(c)} ${pill('neutral',c.platform)}</h3>
+      <dl class="kv">
+        <div><dt>Goal</dt><dd style="font-size:15px">${esc(c.goal)}</dd></div>
+        <div><dt>Paid</dt><dd>${money(c.paid)}</dd></div>
+        <div><dt>Result</dt><dd>${int(c.result)}</dd></div>
+        <div><dt>Each one cost</dt><dd>${money(costEach(c))}</dd></div>
+      </dl>
+      <p class="muted" style="font-size:13px">Result = ${esc(c.unit)}, counted the way the ad platform counts it.</p>
+      <div class="verdict ${v.kind}">${esc(v.text)}</div>
+      <p style="font-size:13px" class="muted">On the site from this campaign (analytics, 28 days): <b class="num">${int(c.visits)}</b> visits · <b class="num">${c.purchases}</b> purchases</p>
+    </article>`}).join('');
+}
+function viewToday(){
+  const act=CAMPAIGNS.filter(c=>c.status==='active');
+  const paid=act.reduce((s,c)=>s+c.paid,0);
+  const purchases=act.reduce((s,c)=>s+c.purchases,0);
+  const apps=97;
+  const total=FUNNEL[0][1];
+  const fun=FUNNEL.map((s,i)=>{
+    const w=Math.max(2,s[1]/total*100);
+    const prev=i?FUNNEL[i-1][1]:null;
+    const drop=prev?`${(s[1]/prev*100).toFixed(0)}% of previous`:'start';
+    return `<div class="step"><span>${s[0]}</span><div class="bar" aria-hidden="true"><i style="width:${w}%"></i></div><span class="num"><b>${int(s[1])}</b> <span class="muted">· ${drop}</span></span></div>`}).join('');
+  return `
+  <section>
+    <header><h2>The last 28 days</h2><p>Every figure on this page covers the same 28-day window, so nothing is compared across different periods.</p></header>
+    <div class="grid g4">
+      <div class="card kpi"><div class="label">Site visits</div><div class="value">${int(9840)}</div><div class="hint">All sources, analytics</div></div>
+      <div class="card kpi"><div class="label">Purchases</div><div class="value">${int(purchases)}</div><div class="hint">Online store only; in-person sales are not measured</div></div>
+      <div class="card kpi"><div class="label">Paid on ads</div><div class="value">${money(paid)}</div><div class="hint">Google + Meta, running campaigns</div></div>
+      <div class="card kpi"><div class="label">Job applications</div><div class="value">${apps}</div><div class="hint">${money(900/apps,2)} each · 85 by Meta form + 12 on the page</div></div>
+    </div>
+  </section>
+  <section>
+    <header><h2>Campaigns running now</h2><p>Only campaigns that are active and spent money recently. Each one says what it paid, what it was for, what it achieved, and whether that was cheap or expensive for its type.</p></header>
+    <div class="card" style="margin-bottom:14px">
+      <label class="f" for="margin">Assumed gross margin on products: <b class="num" id="mval">${state.margin}%</b>
+        <small id="mnote">An assumption you can edit. It sets the break-even point: with ${state.margin}% margin, each $1 of ads must bring ${(100/state.margin).toFixed(2)} in sales to pay back.</small>
+        <input id="margin" type="range" min="20" max="80" step="5" value="${state.margin}"></label>
+    </div>
+    <div class="grid g2" id="cards">${cardsHtml()}</div>
+  </section>
+  <section>
+    <header><h2>From interest to purchase · 28 days</h2><p>People, not events. The steepest fall shows where to look first.</p></header>
+    <div class="card"><div class="fun">${fun}</div>
+      <p class="muted" style="margin-top:12px;font-size:14px">Of every 100 people who view a product, about ${(FUNNEL[4][1]/FUNNEL[0][1]*100).toFixed(1)} buy. The biggest fall is between viewing a product and adding it to the cart (${(FUNNEL[1][1]/FUNNEL[0][1]*100).toFixed(0)}% continue).</p></div>
+  </section>`;
+}
+
+/* ============ CAMPAIGNS ============ */
+function viewCampaigns(){
+  const keyFn={unit:c=>'Result: '+c.unit,status:c=>c.status==='active'?'Running':'Ended',platform:c=>c.platform}[state.group];
+  const groups={};
+  CAMPAIGNS.forEach(c=>{(groups[keyFn(c)]??=[]).push(c)});
+  const rows=Object.keys(groups).sort().map(g=>{
+    const list=groups[g];
+    const sub=state.group==='unit'?'':'';
+    return `<tr class="grp"><td colspan="7">${esc(g)} · ${list.length}${sub}</td></tr>`+list.map(c=>{
+      const v=verdict(c);
+      return `<tr class="click" tabindex="0" data-open="${c.id}">
+        <td><b>${esc(c.name)}</b><div class="muted" style="font-size:12px">${esc(c.goal)} · ${c.platform} · from ${c.started}</div></td>
+        <td>${statusPill(c)}</td>
+        <td class="r num">${money(c.paid)}</td>
+        <td class="r num">${int(c.result)} <span class="muted" style="font-size:12px">${esc(c.unit)}</span></td>
+        <td class="r num">${money(costEach(c))}</td>
+        <td class="r num">${c.revenue?money(c.revenue):'—'}</td>
+        <td>${v.ratio===null?pill('neutral','no peers'):v.ratio<0.8?pill('good','cheaper'):v.ratio>1.2?pill('bad','pricier'):pill('neutral','usual')}</td></tr>`}).join('')}).join('');
+  let detail='';
+  if(state.open){
+    const c=CAMPAIGNS.find(x=>x.id===state.open); const v=verdict(c);
+    const peers=CAMPAIGNS.filter(x=>x.unit===c.unit);
+    const max=Math.max(...peers.map(costEach));
+    const bars=peers.map(p=>`<div class="b"><span>${esc(p.name)}</span><div class="t"><i class="${p.id===c.id?'':'bad'}" style="width:${costEach(p)/max*100}%;${p.id===c.id?'':'opacity:.45'}"></i></div><span class="num">${money(costEach(p))}</span></div>`).join('');
+    detail=`<section class="card" id="detail"><div class="row" style="justify-content:space-between"><h2>${esc(c.name)}</h2><button class="btn ghost small" data-close>Close</button></div>
+      <p class="muted" style="margin:4px 0 12px">${esc(c.goal)} on ${c.platform}, started ${c.started}. Counted result: ${esc(c.unit)}.</p>
+      <div class="verdict ${v.kind}" style="margin-bottom:14px">${esc(v.text)}</div>
+      <h3 style="margin-bottom:8px">Cost of each ${esc(c.unit.replace(/s$/,''))}, against campaigns of the same type</h3>
+      <div class="bars">${bars}</div>
+      <p class="muted" style="font-size:13px;margin-top:10px">Only campaigns that count the same thing are compared. Comparing reach against purchases would be meaningless.</p></section>`;
+  }
+  return `<section><header><h2>All campaigns, current and past</h2><p>Group them by what they count, by status or by platform. Click a row to compare it with its peers.</p></header>
+    <div class="row" style="margin-bottom:12px"><span class="muted">Group by</span>
+      <div class="toggle" role="group" aria-label="Group by">${[['unit','Result type'],['status','Status'],['platform','Platform']].map(([k,l])=>`<button aria-pressed="${state.group===k}" data-group="${k}">${l}</button>`).join('')}</div></div>
+    ${detail}
+    <div class="card pad0"><div class="tablewrap"><table><thead><tr><th>Campaign</th><th>Status</th><th class="r">Paid</th><th class="r">Result</th><th class="r">Each</th><th class="r">Sales</th><th>Vs. usual</th></tr></thead><tbody>${rows}</tbody></table></div></div></section>`;
+}
+
+/* ============ NEW CAMPAIGN ============ */
+const STEPS=['Draft','In review','Approved','Created in Meta (paused)'];
+function newDraft(){return {post:null,objective:'',cities:[],audience:'general',segs:[],followers:'both',budgetType:'daily',budget:'',start:new Date().toISOString().slice(0,10),end:'',formMode:'existing',formName:'Hiring form v2',questions:['Full name','Email','Phone'],privacy:'',doneBtn:'See our stores',doneLink:'https://brightline.example/stores/'}}
+function checksFor(d){
+  const o=OBJECTIVES.find(x=>x.id===d.objective); const out=[];
+  const add=(ok,label,sev='err')=>out.push({ok,label,sev});
+  add(!!d.post,'A post is chosen');
+  add(!!o,'The goal is chosen (required)');
+  add(d.cities.length>0,'At least one city is set');
+  add(Number(d.budget)>0,'A budget is set');
+  add(!!d.start&&!!d.end&&d.end>=d.start,'Start and end dates are valid');
+  if(d.objective==='leads'){
+    if(d.formMode==='new'){
+      add(d.questions.length>0,'The instant form has questions');
+      add(/^https?:\/\//.test(d.privacy),'The form has a privacy policy link (Meta requires it)');
+    }
+    add(/^https?:\/\//.test(d.doneLink),'The thank-you screen button has a link');
+  }
+  if(!state.pixel&&(d.objective==='sales'||d.audience==='remarketing'))
+    add(false,`The site pixel is missing: Meta cannot see carts or purchases, so it cannot ${d.objective==='sales'?'optimise for sales':'build the remarketing list'}. Google can.`);
+  if(d.audience==='remarketing') add(d.segs.length>0,'A remarketing group is chosen');
+  return out;
+}
+function viewNew(){
+  if(!state.draft)state.draft=newDraft();
+  const d=state.draft; const o=OBJECTIVES.find(x=>x.id===d.objective);
+  const locked=state.flowStep>0;
+  const dis=locked?'disabled':'';
+  const checks=checksFor(d);
+  const errs=checks.filter(c=>!c.ok&&c.sev==='err').length;
+  const flow=STEPS.map((s,i)=>`<span class="s ${i===state.flowStep?'on':i<state.flowStep?'done':''}">${i+1}. ${s}</span>`).join('<span class="muted">→</span>');
+  const posts=POSTS.map(p=>`<button class="opt" role="radio" aria-checked="${d.post===p.id}" data-post="${p.id}" ${dis}><b>${esc(p.text)}</b><span>${p.type} · ${p.date}</span></button>`).join('');
+  const objs=OBJECTIVES.map(x=>`<button class="opt" role="radio" aria-checked="${d.objective===x.id}" data-obj="${x.id}" ${dis}><b>${x.label}</b><span>${x.help}</span></button>`).join('');
+  const segs=SEGMENTS.map(([id,l])=>`<label style="display:flex;gap:8px;font-size:14px;margin:4px 0"><input type="checkbox" data-seg="${id}" ${d.segs.includes(id)?'checked':''} ${dis}> ${l}</label>`).join('');
+  const days=d.start&&d.end?Math.round((Date.parse(d.end)-Date.parse(d.start))/864e5)+1:0;
+  const total=d.budgetType==='total'?Number(d.budget||0):Number(d.budget||0)*Math.max(days,0);
+  const form=d.objective==='leads'?`
+    <section class="card"><header><h2>The instant form</h2><p>A lead campaign needs a second thing to be created: the form people fill in. Pick an existing one or define a new one.</p></header>
+      <div class="opts" role="radiogroup" aria-label="Form source" style="margin-bottom:12px">
+        <button class="opt" role="radio" aria-checked="${d.formMode==='existing'}" data-fmode="existing" ${dis}><b>Use an existing form</b><span>Hiring form v2 (85 applications so far)</span></button>
+        <button class="opt" role="radio" aria-checked="${d.formMode==='new'}" data-fmode="new" ${dis}><b>Create a new form</b><span>Questions, privacy link and thank-you screen</span></button></div>
+      ${d.formMode==='new'?`<div class="grid g2">
+        <div><b style="font-size:14px">Questions</b>${['Full name','Email','Phone','City','Years of retail experience'].map(q=>`<label style="display:flex;gap:8px;font-size:14px;margin:4px 0"><input type="checkbox" data-q="${q}" ${d.questions.includes(q)?'checked':''} ${dis}> ${q}</label>`).join('')}</div>
+        <div><label class="f" for="priv">Privacy policy link <small>Required by Meta</small><input id="priv" type="text" data-bind="privacy" value="${esc(d.privacy)}" placeholder="https://…" ${dis}></label>
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px;margin-top:10px"><label class="f" for="dbtn">Thank-you button<input id="dbtn" type="text" data-bind="doneBtn" value="${esc(d.doneBtn)}" ${dis}></label><label class="f" for="dlnk">Button link<input id="dlnk" type="text" data-bind="doneLink" value="${esc(d.doneLink)}" ${dis}></label></div></div></div>`:`<p class="muted" style="font-size:14px">The form already exists, so only its thank-you button is checked: it must lead somewhere trackable. The app adds the campaign tag to that link.</p>`}
+    </section>`:'';
+  const auto=o?`<div class="auto">
+    <div><b>Name</b>${esc(autoName(d))}</div>
+    <div><b>Goal in Meta</b>${o.meta}</div>
+    <div><b>Optimises for</b>${o.goal}</div>
+    <div><b>Leads to</b>${o.dest}</div>
+    <div><b>Visit tag</b><code>utm_campaign={{campaign.id}}</code></div>
+    <div><b>Placements</b>Automatic (Instagram and Facebook)</div>
+    <div><b>Created as</b>Paused</div></div>`:'<p class="muted">Pick a goal and the tool shows what it will set up for you.</p>';
+  const created=state.created?`<section class="card"><h2>What was connected automatically</h2><p class="muted" style="margin:2px 0 10px">Simulated. In the real tool these are the objects created in the ad platform, all paused.</p>
+    <div class="auto">${state.created.map(([k,v])=>`<div><b>${k}</b><code>${esc(v)}</code></div>`).join('')}</div>
+    <p style="margin-top:12px" class="verdict good">Nothing is spending. The team publishes it from the ad account when they are ready. That last click stays human on purpose.</p></section>`:'';
+  return `
+  <section><header><h2>New campaign</h2><p>The person doing social media picks a post, sets the goal and the few things that matter. The tool builds everything else. Nothing here can spend money.</p></header>
+    <div class="flow" aria-label="Progress">${flow}</div></section>
+  <section class="card"><header><h2>1 · Post to promote</h2><p>Choose a post that already exists.</p></header><div class="opts" role="radiogroup" aria-label="Post">${posts}</div></section>
+  <section class="card"><header><h2>2 · Goal <span class="pill warn">required</span></h2><p>Changing the goal changes what the platform asks for, so the steps below follow it.</p></header><div class="opts" role="radiogroup" aria-label="Goal">${objs}</div></section>
+  ${form}
+  <section class="card"><header><h2>3 · Who and where</h2></header>
+    <div class="grid g2">
+      <div>
+        <b style="font-size:14px">Cities (several allowed)</b>
+        <div class="row" style="margin-top:6px;align-items:flex-end;flex-wrap:nowrap">
+          <label class="f" for="city" style="flex:1">City<input id="city" type="text" placeholder="Springfield" ${dis}></label>
+          <label class="f" for="rad" style="width:96px">Radius<select id="rad" ${dis}>${RADII.map(r=>`<option value="${r}" ${r===17?'selected':''}>${r} km</option>`).join('')}</select></label>
+          <button class="btn small" id="addcity" ${dis} style="margin-bottom:2px">Add</button></div>
+        <div class="chips">${d.cities.map((c,i)=>`<span class="chip">${esc(c.name)} · ${c.r} km ${locked?'':`<button data-rmcity="${i}" aria-label="Remove ${esc(c.name)}">×</button>`}</span>`).join('')||'<span class="muted" style="font-size:14px">No cities yet.</span>'}</div>
+      </div>
+      <div>
+        <b style="font-size:14px">Audience</b>
+        <div class="opts" role="radiogroup" aria-label="Audience" style="margin-top:6px">
+          <button class="opt" role="radio" aria-checked="${d.audience==='general'}" data-aud="general" ${dis}><b>General</b><span>Anyone in the area. No filter by site visits.</span></button>
+          <button class="opt" role="radio" aria-checked="${d.audience==='remarketing'}" data-aud="remarketing" ${dis}><b>Remarketing</b><span>People who already visited the store site.</span></button></div>
+        ${d.audience==='remarketing'?`<div style="margin-top:10px">${segs}</div>`:''}
+        <b style="font-size:14px;display:block;margin-top:14px">Followers or not?</b>
+        <div class="opts" role="radiogroup" aria-label="Followers" style="margin-top:6px">
+          ${[['both','Both','Followers and non-followers, no filter.'],['non','Only non-followers','To reach new people.'],['fol','Only followers','To talk to the community.']].map(([k,t,s])=>`<button class="opt" role="radio" aria-checked="${d.followers===k}" data-fol="${k}" ${dis}><b>${t}</b><span>${s}</span></button>`).join('')}</div>
+        <p class="muted" style="font-size:13px;margin-top:6px">The platform does not exclude followers on its own. The tool links the follower audience when it creates the campaign.</p>
+      </div></div></section>
+  <section class="card"><header><h2>4 · Budget and dates</h2></header>
+    <div class="grid g4">
+      <label class="f" for="bt">Type<select id="bt" data-bind="budgetType" ${dis}><option value="daily" ${d.budgetType==='daily'?'selected':''}>Per day</option><option value="total" ${d.budgetType==='total'?'selected':''}>Total</option></select></label>
+      <label class="f" for="bud">Amount (USD)<input id="bud" type="number" min="0" data-bind="budget" value="${d.budget}" ${dis}></label>
+      <label class="f" for="st">Starts<input id="st" type="date" data-bind="start" value="${d.start}" ${dis}></label>
+      <label class="f" for="en">Ends<input id="en" type="date" data-bind="end" value="${d.end}" ${dis}></label></div>
+    ${days>0&&Number(d.budget)>0?`<p style="margin-top:10px"><b>${days} days</b>: ${money(d.budgetType==='daily'?Number(d.budget):total/days,2)} a day and <b>${money(total)}</b> at most in total.</p>`:''}
+  </section>
+  <section class="card"><header><h2>What the tool sets up by itself</h2></header>${auto}</section>
+  <section class="card"><header><h2>Review</h2>
+    <p>Demo switch: <label style="display:inline-flex;gap:8px;align-items:center"><input type="checkbox" id="pixel" ${state.pixel?'checked':''}> The store site already sends events to Meta (pixel installed)</label></p></header>
+    <ul class="checks">${checks.map(c=>`<li><span class="dot ${c.ok?'ok':'err'}" aria-hidden="true">${c.ok?'✓':'!'}</span><span>${c.ok?'':'<b>Fix: </b>'}${esc(c.label)}</span></li>`).join('')}</ul>
+    <div class="row" style="margin-top:14px">
+      ${state.flowStep===0?`<button class="btn" id="tosubmit" ${errs||!canEdit()?'disabled':''}>Send for review</button>`:''}
+      ${state.flowStep===1?`<button class="btn" id="approve">Approve</button><button class="btn ghost" id="back">Return to draft</button>`:''}
+      ${state.flowStep===2?`<button class="btn" id="create">Create in Meta, paused</button><button class="btn ghost" id="back">Return to draft</button>`:''}
+      ${state.flowStep===3?`<button class="btn ghost" id="reset">Start another</button>`:''}
+      ${errs&&state.flowStep===0?`<span class="muted" style="font-size:14px">${errs} thing${errs>1?'s':''} to fix before review.</span>`:''}
+    </div></section>
+  ${created}`;
+}
+const canEdit=()=>true;
+const autoName=d=>{const o=OBJECTIVES.find(x=>x.id===d.objective);const c=d.cities.map(x=>x.name.replace(/\W+/g,'')).join('-')||'City';return `BL_${c}_${o?o.label.split(' ')[0]:'Goal'}_${(d.start||'').slice(0,7)}`};
+
+/* ============ DATA CHECKS ============ */
+const chk={leads:'fixed',loop:'fixed',period:'fixed'};
+function viewChecks(){
+  const T=(k,a,b)=>`<div class="toggle" role="group">${[['raw',a],['fixed',b]].map(([v,l])=>`<button aria-pressed="${chk[k]===v}" data-chk="${k}:${v}">${l}</button>`).join('')}</div>`;
+  const leads=chk.leads==='raw'?410:82;
+  const events=chk.loop==='raw'?1204:8;
+  const cost=chk.period==='raw'?{m:'90 days',g:'28 days',tot:'$14,300 vs 28-day sales'}:{m:'28 days',g:'28 days',tot:'$5,200 vs 28-day sales'};
+  return `<section><header><h2>Why the numbers can be trusted</h2><p>Three real kinds of data problem this kind of tool runs into, shown here with invented figures. Flip each switch to see what changes.</p></header>
+  <div class="grid g2">
+    <div class="card"><h3>One lead, counted five times</h3><p class="muted" style="margin:4px 0 10px;font-size:14px">The ad platform logs the same lead under several event names. Adding them all inflates the result.</p>${T('leads','Sum of all names','One event type')}
+      <div class="bars" style="margin-top:14px"><div class="b"><span>Leads shown</span><div class="t"><i class="${chk.leads==='raw'?'bad':''}" style="width:${leads/410*100}%"></i></div><span class="num"><b>${leads}</b></span></div><div class="b"><span>In the ad account</span><div class="t"><i style="width:${82/410*100}%"></i></div><span class="num"><b>82</b></span></div></div>
+      <p class="verdict ${chk.leads==='raw'?'bad':'good'}" style="margin-top:12px">${chk.leads==='raw'?'The tool would say a lead costs one fifth of the real price.':'Matches what the ad account reports, checked campaign by campaign.'}</p></div>
+    <div class="card"><h3>A tag firing in a loop</h3><p class="muted" style="margin:4px 0 10px;font-size:14px">A tag fired the same analytics event again every time it triggered itself.</p>${T('loop','Count everything','Ignore loops')}
+      <div class="bars" style="margin-top:14px"><div class="b"><span>Applications</span><div class="t"><i class="${chk.loop==='raw'?'bad':''}" style="width:${events/1204*100}%"></i></div><span class="num"><b>${int(events)}</b></span></div><div class="b"><span>People</span><div class="t"><i style="width:${4/1204*100+2}%"></i></div><span class="num"><b>4</b></span></div></div>
+      <p class="verdict ${chk.loop==='raw'?'bad':'good'}" style="margin-top:12px">${chk.loop==='raw'?'1,204 “applications” from 4 people is not real.':'An event repeated hundreds of times per person is discarded; only plausible events are counted.'}</p></div>
+    <div class="card"><h3>Mixed time windows</h3><p class="muted" style="margin:4px 0 10px;font-size:14px">One source defaulted to 90 days and another to 28, so the page compared different things.</p>${T('period','Mixed windows','Same window')}
+      <dl class="kv" style="margin-top:14px"><div><dt>Meta window</dt><dd>${cost.m}</dd></div><div><dt>Google window</dt><dd>${cost.g}</dd></div><div><dt>Spend compared</dt><dd style="font-size:15px">${cost.tot}</dd></div></dl>
+      <p class="verdict ${chk.period==='raw'?'bad':'good'}" style="margin-top:12px">${chk.period==='raw'?'Spend from 90 days against sales from 28 makes every campaign look worse than it is.':'Every card and table uses the same 28 days, and the window is printed on the page.'}</p></div>
+    <div class="card"><h3>How it is wired</h3><ul class="checks" style="margin-top:8px">
+      ${['Analytics: visits, events, purchases','Search Console: what people typed in Google','Google Ads: spend and clicks (via analytics)','Ad platform API: results by goal, adsets, posts'].map(t=>`<li><span class="dot ok" aria-hidden="true">✓</span><span>${t}</span></li>`).join('')}
+      <li><span class="dot ok" aria-hidden="true">✓</span><span>Read-only access with the minimum permissions; keys stay on the server, never in the browser or in chat</span></li>
+      <li><span class="dot ok" aria-hidden="true">✓</span><span>Three roles: view, edit, sync, checked on the server for every route</span></li></ul></div>
+  </div></section>`;
+}
+
+/* ============ render / events ============ */
+function render(){
+  const v=$('#view'); const f={today:viewToday,campaigns:viewCampaigns,new:viewNew,checks:viewChecks}[state.tab];
+  const focusId=document.activeElement&&document.activeElement.id;
+  v.innerHTML=f();
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===state.tab)));
+  if(focusId){const el=document.getElementById(focusId);if(el){el.focus();if(el.setSelectionRange&&el.type==='text'){try{el.setSelectionRange(el.value.length,el.value.length)}catch(e){}}}}
+}
+function go(tab){state.tab=tab;try{history.replaceState(null,'','#'+tab)}catch(e){}render();window.scrollTo({top:0})}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-tab],[data-group],[data-open],[data-close],[data-post],[data-obj],[data-fmode],[data-aud],[data-fol],[data-rmcity],[data-chk],#addcity,#tosubmit,#approve,#back,#create,#reset');
+  if(!t)return; const d=state.draft;
+  if(t.dataset.tab)return go(t.dataset.tab);
+  if(t.dataset.group){state.group=t.dataset.group;return render()}
+  if(t.dataset.open){state.open=t.dataset.open;render();const x=$('#detail');if(x)x.scrollIntoView({behavior:'smooth',block:'start'});return}
+  if('close' in t.dataset){state.open=null;return render()}
+  if(t.dataset.chk){const [k,v]=t.dataset.chk.split(':');chk[k]=v;return render()}
+  if(t.dataset.post){d.post=t.dataset.post;return render()}
+  if(t.dataset.obj){d.objective=t.dataset.obj;return render()}
+  if(t.dataset.fmode){d.formMode=t.dataset.fmode;return render()}
+  if(t.dataset.aud){d.audience=t.dataset.aud;return render()}
+  if(t.dataset.fol){d.followers=t.dataset.fol;return render()}
+  if(t.dataset.rmcity!==undefined){d.cities.splice(Number(t.dataset.rmcity),1);return render()}
+  if(t.id==='addcity'){const n=$('#city').value.trim();if(n){d.cities.push({name:n,r:Number($('#rad').value)});}return render()}
+  if(t.id==='tosubmit'){state.flowStep=1;return render()}
+  if(t.id==='approve'){state.flowStep=2;return render()}
+  if(t.id==='back'){state.flowStep=0;state.created=null;return render()}
+  if(t.id==='create'){
+    const o=OBJECTIVES.find(x=>x.id===d.objective);const rnd=()=>String(Math.floor(Math.random()*9e11+1e11));
+    state.created=[['Campaign',`ID ${rnd()} · ${o.meta} · paused`],['Ad set',`ID ${rnd()} · ${d.cities.map(c=>c.name+' '+c.r+' km').join(', ')} · ${d.ageText||'18–55'} · ${d.followers==='both'?'followers + non-followers':d.followers==='non'?'excludes followers':'followers only'}`],['Ad',`ID ${rnd()} · uses post “${(POSTS.find(p=>p.id===d.post)||{}).text}”`],['Visit tag','utm_campaign={{campaign.id}} added to the destination link'],...(d.objective==='leads'?[['Instant form',d.formMode==='existing'?'Hiring form v2 (existing)':`New form · ${d.questions.length} questions · privacy link set`],['Thank-you button',`“${d.doneBtn}” → ${d.doneLink}?utm_campaign={{campaign.id}}`]]:[]),...(d.audience==='remarketing'?[['Remarketing groups',d.segs.map(s=>SEGMENTS.find(x=>x[0]===s)[1]).join(' · ')]]:[]),['Status','Paused. Waiting for the team to publish from the ad account.']];
+    state.flowStep=3;return render()}
+  if(t.id==='reset'){state.draft=newDraft();state.flowStep=0;state.created=null;return render()}
+});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='margin'){
+    state.margin=Number(t.value);$('#mval').textContent=state.margin+'%';
+    $('#mnote').textContent=`An assumption you can edit. It sets the break-even point: with ${state.margin}% margin, each $1 of ads must bring ${(100/state.margin).toFixed(2)} in sales to pay back.`;
+    $('#cards').innerHTML=cardsHtml();return}
+  if(t.dataset&&t.dataset.bind&&state.draft)state.draft[t.dataset.bind]=t.value;
+});
+document.addEventListener('change',e=>{
+  const t=e.target; const d=state.draft;
+  if(t.id==='pixel'){state.pixel=t.checked;return render()}
+  if(t.dataset&&t.dataset.seg){const i=d.segs.indexOf(t.dataset.seg);i<0?d.segs.push(t.dataset.seg):d.segs.splice(i,1);return render()}
+  if(t.dataset&&t.dataset.q){const i=d.questions.indexOf(t.dataset.q);i<0?d.questions.push(t.dataset.q):d.questions.splice(i,1);return render()}
+  if(t.dataset&&t.dataset.bind){return render()}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.id==='city'){e.preventDefault();$('#addcity').click()}
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('tr[data-open]')){e.preventDefault();e.target.click()}
+});
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(['today','campaigns','new','checks'].includes(h)){state.tab=h;render()}});
+(function(){const h=location.hash.slice(1);if(['today','campaigns','new','checks'].includes(h))state.tab=h;render()})();
+</script>
+</body>
+</html>
