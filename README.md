@@ -2,7 +2,7 @@
 
 **Live demo:** https://deboramalqui.github.io/campaign-suite-demo/
 
-A sample prototype made for a CV. **Every number, name and campaign is invented.** It connects to no account and cannot spend money.
+A sample prototype made for a CV. Styled with the brand tokens of **Kol Accesorios** (an Argentine phone-accessories retail chain) for the demo. **Every number, name and campaign is invented.** It connects to no account and cannot spend money.
 
 It models a reporting and campaign-planning workspace for the people who pay for ads, built around one question: *did it work, and what did it cost?*
 
