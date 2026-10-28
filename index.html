@@ -137,6 +137,9 @@ ul.checks .dot{flex:none;width:20px;height:20px;border-radius:6px;display:grid;p
 .toggle button{font:600 13px var(--f-display);background:var(--surface);color:var(--ink);border:0;padding:7px 12px;cursor:pointer}
 .toggle button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 ::selection{background:var(--accent);color:var(--accent-ink)}
+.manual-note{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin:0 0 16px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--accent-shape);border-radius:var(--r);background:var(--surface)}
+.manual-note span{font:600 15px/1.35 var(--f-display);min-width:0}
+.manual-note a.btn{text-decoration:none;display:inline-block;white-space:nowrap}
 footer{border-top:1px solid var(--line);padding:18px 0 28px;color:var(--muted);font-size:13px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -156,6 +159,11 @@ footer{border-top:1px solid var(--line);padding:18px 0 28px;color:var(--muted);f
   </div>
   <span class="brandtag">Kol Accesorios · demo data · last 28 days</span>
 </header>
+
+<aside class="manual-note" aria-label="Brand manual">
+  <span>A franchise network couldn't go without its brand manual.</span>
+  <a class="btn" href="https://deboramalqui.github.io/marcas/guidelines.html#kol-franquicias" target="_blank" rel="noopener">Flip through it ↗</a>
+</aside>
 
 <nav class="tabs" role="tablist" aria-label="Sections">
   <button role="tab" id="t-today" aria-selected="true" data-tab="today">1 · Today</button>
