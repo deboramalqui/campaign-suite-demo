@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head><script>(function(){try{var q=new URLSearchParams(location.search),t=q.get("theme"),d=document.documentElement;if(t==="dark"||t==="light")d.setAttribute("data-theme",t);if(q.get("embed"))d.setAttribute("data-embed","1")}catch(e){}})()</script>
+<head><script>(function(){try{var q=new URLSearchParams(location.search),t=q.get("theme"),d=document.documentElement;if(t==="dark"||t==="light")d.setAttribute("data-theme",t);if(q.get("embed")){d.setAttribute("data-embed","1");document.addEventListener("DOMContentLoaded",function(){document.querySelectorAll("a[href]").forEach(function(a){var h=a.getAttribute("href")||"";if(h.charAt(0)==="#")return;if(h.indexOf("guidelines.html")>-1){var o="";try{o=document.referrer?new URL(document.referrer).origin:""}catch(e){}a.href=(o?o+"/marcas/guidelines.html":h.split("?")[0].split("#")[0])+"?desde=suite#kol-franquicias";a.target="_top"}else if(!a.target){a.target="_blank";a.rel="noopener"}})})}}catch(e){}})()</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Interactive sample prototype of a campaign reporting and planning workspace. All data is invented.">
